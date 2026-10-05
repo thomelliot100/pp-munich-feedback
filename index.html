@@ -166,6 +166,34 @@ textarea:focus{outline:none; border-color:var(--green)}
 /* ============================================================
    CONFIG — the only bit most people need to edit
    ============================================================ */
+// The survey. Everyone gets the same questions.
+// Types: text (open answer) · rating (1–5; add `why` for a follow-up text box) · nps (0–10) · choice (one) · multi (several)
+// Change the wording freely; keep each id stable so answers stay comparable.
+const SURVEY = [
+  { id: "best",     type: "text",   q: { en: "What was the best thing about your meal today?", de: "Was war heute das Beste an deinem Essen?" } },
+  { id: "improve",  type: "text",   q: { en: "What was the one thing you'd improve?", de: "Welche eine Sache würdest du verbessern?" } },
+  { id: "pizza",    type: "rating", q: { en: "How would you rate the pizza itself?", de: "Wie bewertest du die Pizza selbst?" },
+    why: { en: "What made you say that?", de: "Warum?" } },
+  { id: "surprise", type: "text",   q: { en: "Did anything surprise you, in a good or bad way?", de: "Hat dich etwas überrascht, positiv oder negativ?" } },
+  { id: "value",    type: "text",   q: { en: "Did it feel like good value for money? Why or why not?", de: "War das Preis-Leistungs-Verhältnis gut? Warum oder warum nicht?" } },
+  { id: "experience", type: "text", q: { en: "How did the whole experience feel: service, atmosphere, music, design, everything?", de: "Wie hat sich das Gesamterlebnis angefühlt: Service, Atmosphäre, Musik, Design, alles?" } },
+  { id: "change",   type: "text",   q: { en: "If this was your pizzeria, what's the first thing you'd change?", de: "Wenn das deine Pizzeria wäre: Was würdest du als Erstes ändern?" } },
+  { id: "comeback", type: "text",   q: { en: "What would make you come back again next week?", de: "Was würde dich nächste Woche wiederkommen lassen?" } },
+  { id: "tellfriend", type: "text", q: { en: "What would make you tell a friend: “you have to go there”?", de: "Was würde dich dazu bringen, Freunden zu sagen: „Da musst du hin“?" } },
+  { id: "bestinmunich", type: "text", q: { en: "What would we need to do for you to say this is the best pizza place in Munich?", de: "Was müssten wir tun, damit du sagst: Das ist die beste Pizzeria in München?" } },
+  { id: "whycame",  type: "multi",  q: { en: "What made you dine with us today?", de: "Warum hast du heute bei uns gegessen?" },
+    options: [
+      { id: "quality",     en: "Quality", de: "Qualität" },
+      { id: "product",     en: "The pizza and menu", de: "Die Pizza und die Karte" },
+      { id: "price",       en: "Price", de: "Preis" },
+      { id: "location",    en: "Location", de: "Lage" },
+      { id: "convenience", en: "Convenience", de: "Praktisch für mich" },
+      { id: "brand",       en: "Curious about the brand", de: "Neugier auf die Marke" },
+      { id: "space",       en: "The look of the place", de: "Das Lokal selbst" },
+      { id: "other",       en: "Something else", de: "Etwas anderes" }
+    ] }
+];
+
 const CONFIG = {
   // Paste the Google Apps Script web app URL here (ends in /exec).
   // Leave blank to run in DEMO mode (saves to this browser only).
@@ -187,67 +215,16 @@ const CONFIG = {
   ],
 
   // Internal stakeholder groups. Put ?role=<id> in a link to skip the "who are you" step.
-  // Types: rating (1–5) · nps (0–10) · choice (one) · multi (several)
-  // Change the wording freely; keep each id stable so answers stay comparable.
   roles: [
-    {
-      id: "sitelead", icon: "🔑",
+    { id: "sitelead", icon: "🔑", questions: SURVEY,
       label: { en: "I run the site", de: "Ich leite das Restaurant" },
-      sub:   { en: "GM, head chef or manager", de: "GM, Küchenchef oder Manager" },
-      questions: [
-        { id: "readiness", type: "rating", q: { en: "How ready was the site on day one?", de: "Wie bereit war das Restaurant am ersten Tag?" } },
-        { id: "build",     type: "rating", q: { en: "How did the build and fit-out land?", de: "Wie gut sind Bau und Einrichtung gelungen?" } },
-        { id: "hosupport", type: "rating", q: { en: "How useful was head office support?", de: "Wie hilfreich war der Support aus dem Head Office?" } },
-        { id: "supply",    type: "rating", q: { en: "How reliable is local supply so far?", de: "Wie zuverlässig ist die lokale Lieferkette bisher?" } },
-        { id: "blocker",   type: "choice", q: { en: "Biggest blocker right now?", de: "Größter Engpass gerade?" },
-          options: [
-            { id: "staffing", en: "Staffing", de: "Personal" },
-            { id: "training", en: "Training", de: "Training" },
-            { id: "kit",      en: "Kit or building", de: "Ausstattung oder Gebäude" },
-            { id: "supply",   en: "Suppliers", de: "Lieferanten" },
-            { id: "systems",  en: "Systems and admin", de: "Systeme und Verwaltung" },
-            { id: "demand",   en: "Footfall", de: "Gästeaufkommen" }
-          ] }
-      ]
-    },
-    {
-      id: "support", icon: "🧳",
+      sub:   { en: "GM, head chef or manager", de: "GM, Küchenchef oder Manager" } },
+    { id: "support", icon: "🧳", questions: SURVEY,
       label: { en: "I came over to help", de: "Ich war zur Unterstützung da" },
-      sub:   { en: "Opening team or head office", de: "Opening-Team oder Head Office" },
-      questions: [
-        { id: "execution", type: "rating", q: { en: "How well did the opening run?", de: "Wie gut lief die Eröffnung?" } },
-        { id: "brand",     type: "rating", q: { en: "Does it feel like Pizza Pilgrims?", de: "Fühlt es sich nach Pizza Pilgrims an?" } },
-        { id: "product",   type: "rating", q: { en: "Is the pizza up to standard?", de: "Hat die Pizza unseren Standard?" } },
-        { id: "playbook",  type: "rating", q: { en: "How well did the opening playbook travel?", de: "Wie gut hat das Opening-Playbook funktioniert?" } },
-        { id: "fix",       type: "choice", q: { en: "Fix first for the next one?", de: "Was zuerst fürs nächste Mal verbessern?" },
-          options: [
-            { id: "hiring",   en: "Hiring and training", de: "Recruiting und Training" },
-            { id: "build",    en: "Build programme", de: "Bauzeitplan" },
-            { id: "supply",   en: "Supply chain", de: "Lieferkette" },
-            { id: "systems",  en: "Systems and admin", de: "Systeme und Verwaltung" },
-            { id: "comms",    en: "Communication", de: "Kommunikation" }
-          ] }
-      ]
-    },
-    {
-      id: "leadership", icon: "📋",
+      sub:   { en: "Opening team or head office", de: "Opening-Team oder Head Office" } },
+    { id: "leadership", icon: "📋", questions: SURVEY,
       label: { en: "I'm reviewing the launch", de: "Ich bewerte den Launch" },
-      sub:   { en: "Leadership or board", de: "Geschäftsleitung oder Board" },
-      questions: [
-        { id: "execution", type: "rating", q: { en: "How well was the launch executed?", de: "Wie gut wurde der Launch umgesetzt?" } },
-        { id: "brand",     type: "rating", q: { en: "Does it feel like Pizza Pilgrims?", de: "Fühlt es sich nach Pizza Pilgrims an?" } },
-        { id: "local",     type: "rating", q: { en: "Does it fit Munich?", de: "Passt es zu München?" } },
-        { id: "risk",      type: "choice", q: { en: "Biggest risk right now?", de: "Größtes Risiko gerade?" },
-          options: [
-            { id: "people",  en: "People and hiring", de: "Personal und Recruiting" },
-            { id: "demand",  en: "Demand", de: "Nachfrage" },
-            { id: "product", en: "Product consistency", de: "Produktkonsistenz" },
-            { id: "costs",   en: "Costs and margin", de: "Kosten und Marge" },
-            { id: "supply",  en: "Supply chain", de: "Lieferkette" }
-          ] },
-        { id: "next", type: "rating", q: { en: "How ready are we for the next site?", de: "Wie bereit sind wir für den nächsten Standort?" } }
-      ]
-    }
+      sub:   { en: "Leadership or board", de: "Geschäftsleitung oder Board" } }
   ]
 };
 
@@ -262,7 +239,7 @@ const T = {
     codeH: "Team code, please",
     codeSub: "You'll find it on the staff noticeboard or in the team chat.",
     codeLabel: "Team code", codeBad: "That code didn't work. Check it and try again.", codeGo: "Let me in",
-    modeSurvey: "Take the survey", modeSurveySub: "A few quick questions, then anything else",
+    modeSurvey: "Take the survey", modeSurveySub: "Eleven questions about your visit",
     modeQuick: "Upload quick feedback", modeQuickSub: "Straight to it. A thought, a voice note or a photo",
     quickH: "What's on your mind?", quickEmpty: "Add a thought, a voice note or a photo first.",
     quickSite: "Which pizzeria? (optional)", quickName: "Your name (optional)",
@@ -297,7 +274,7 @@ const T = {
     codeH: "Team-Code, bitte",
     codeSub: "Du findest ihn am Schwarzen Brett oder im Team-Chat.",
     codeLabel: "Team-Code", codeBad: "Der Code hat nicht funktioniert. Prüf ihn und versuch's nochmal.", codeGo: "Rein da",
-    modeSurvey: "Zur Umfrage", modeSurveySub: "Ein paar kurze Fragen, dann alles Weitere",
+    modeSurvey: "Zur Umfrage", modeSurveySub: "Elf Fragen zu deinem Besuch",
     modeQuick: "Schnelles Feedback hochladen", modeQuickSub: "Direkt los. Ein Gedanke, eine Sprachnotiz oder ein Foto",
     quickH: "Was möchtest du loswerden?", quickEmpty: "Schreib erst etwas, nimm eine Sprachnotiz auf oder füge ein Foto hinzu.",
     quickSite: "Welche Pizzeria? (optional)", quickName: "Dein Name (optional)",
@@ -366,6 +343,7 @@ function sheetColumns(rec){
       v = Array.isArray(v) ? v.map(lab).join(", ") : lab(v);
     }
     cols.push([q.q.en, v ?? ""]);
+    if (q.why) cols.push([q.q.en+" "+q.why.en, rec.answers[q.id+"_why"] ?? ""]);
   });
   return cols;
 }
@@ -509,9 +487,12 @@ function render(){
   else if (state.step==="q"){
     const qs = state.role.questions, q = qs[state.qi], a = state.answers[q.id];
     let ctl = "";
-    if (q.type==="rating"){
+    if (q.type==="text"){
+      ctl = `<textarea id="qtext" data-key="${q.id}" placeholder="${t.cardPh}" aria-label="${esc(L(q.q))}">${esc(a||"")}</textarea>`;
+    } else if (q.type==="rating"){
       ctl = `<div class="scale">${[1,2,3,4,5].map(n=>`<button data-val="${n}" aria-pressed="${a===n}" aria-label="${n} / 5">${n}</button>`).join("")}</div>
       <div class="scale-ends"><span>${t.poor}</span><span>${t.great}</span></div>`;
+      if (q.why) ctl += `<div class="field" style="margin-top:22px"><label for="qtext">${esc(L(q.why))}</label><textarea id="qtext" data-key="${q.id}_why" placeholder="${t.cardPh}">${esc(state.answers[q.id+"_why"]||"")}</textarea></div>`;
     } else if (q.type==="nps"){
       ctl = `<div class="scale nps">${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<button data-val="${n}" aria-pressed="${a===n}" aria-label="${n} / 10">${n}</button>`).join("")}</div>
       <div class="scale-ends"><span>${t.notLikely}</span><span>${t.veryLikely}</span></div>`;
@@ -522,7 +503,7 @@ function render(){
       ctl = `<p class="hint" style="margin:-4px 0 12px">${t.pickAny}</p><div class="options">${q.options.map(o=>`<button class="opt" data-multi="${o.id}" aria-pressed="${set.includes(o.id)}">${esc(L(o))}</button>`).join("")}</div>`;
     }
     body = `${header(pct)}<main><p class="qcount">${t.of(state.qi+1,qs.length)}</p><h2>${esc(L(q.q))}</h2>${ctl}</main>
-      ${actions(a==null||(Array.isArray(a)&&!a.length)?t.skip:t.next)}`;
+      ${actions(q.type!=="text"&&(a==null||(Array.isArray(a)&&!a.length))?t.skip:t.next)}`;
   }
   else if (state.step==="postcard"){
     const recording = !!recorder; const quick = state.mode==="quick";
@@ -623,7 +604,7 @@ function wireFlow(){
     if (b.dataset.val!=null && state.step==="q"){
       const q = state.role.questions[state.qi];
       const v = (q.type==="rating"||q.type==="nps") ? +b.dataset.val : b.dataset.val;
-      state.answers[q.id]=v; render(); setTimeout(()=>go(1),220); return;
+      state.answers[q.id]=v; render(); if (!q.why) setTimeout(()=>go(1),220); return;
     }
     if (b.dataset.multi){
       const q = state.role.questions[state.qi]; const set = new Set(state.answers[q.id]||[]);
@@ -653,6 +634,7 @@ function wireFlow(){
   });
   document.addEventListener("input", e=>{
     if (e.target.id==="comment") state.comment=e.target.value;
+    if (e.target.id==="qtext") state.answers[e.target.dataset.key]=e.target.value;
     if (e.target.id==="nm") state.name=e.target.value;
     if (e.target.id==="em") state.email=e.target.value;
     if (e.target.id==="code") state.codeInput=e.target.value;
@@ -675,7 +657,11 @@ function wireFlow(){
 const A = { rows: [], session: null, f: { site:"", role:"", from:"", to:"" }, msg:"" };
 const roleName = id => CONFIG.roles.find(r=>r.id===id)?.label.en || (id==="quick" ? QUICK_LABEL : id);
 const siteName = id => CONFIG.sites.find(s=>s.id===id)?.name.en || id || "—";
-function qLabel(roleId,qid){ return CONFIG.roles.find(r=>r.id===roleId)?.questions.find(q=>q.id===qid)?.q.en || qid; }
+function qLabel(roleId,qid){
+  const qs = CONFIG.roles.find(r=>r.id===roleId)?.questions || [];
+  const w = qs.find(q=>q.why && q.id+"_why"===qid); if (w) return w.why.en;
+  return qs.find(q=>q.id===qid)?.q.en || qid;
+}
 function optLabel(roleId,qid,v){
   const q = CONFIG.roles.find(r=>r.id===roleId)?.questions.find(x=>x.id===qid);
   if (!q?.options) return v;
@@ -703,7 +689,7 @@ function stats(rows){
 }
 
 function csv(rows){
-  const qids = [...new Set(CONFIG.roles.flatMap(r=>r.questions.map(q=>q.id)))];
+  const qids = [...new Set(CONFIG.roles.flatMap(r=>r.questions.flatMap(q=>q.why?[q.id,q.id+"_why"]:[q.id])))];
   const head = ["created_at","site","role","lang",...qids,"comment","has_voice","photos","contact_name","contact_email","contact_consent"];
   const cell = v => `"${String(Array.isArray(v)?v.join("; "):(v??"")).replace(/"/g,'""')}"`;
   const lines = rows.map(r=>[r.created_at, siteName(r.site), roleName(r.role), r.lang, ...qids.map(q=>r.answers?.[q]), r.comment, !!(r.voice_url||r.voice_path), (r.photo_urls||r.photo_paths||[]).length, r.contact_name, r.contact_email, r.contact_consent].map(cell).join(","));
@@ -734,7 +720,6 @@ function renderAdmin(){
     <div class="stats">
       <div class="stat"><b>${s.n}</b><span>Responses</span></div>
       <div class="stat"><b>${s.overall}</b><span>Avg rating (of 5)</span></div>
-      <div class="stat"><b>${s.nps}</b><span>Crew eNPS</span></div>
       <div class="stat"><b>${s.media}</b><span>With voice or photos</span></div>
       <div class="stat"><b>${s.contact}</b><span>Happy to be contacted</span></div>
     </div>

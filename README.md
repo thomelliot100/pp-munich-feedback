@@ -35,7 +35,7 @@ Use a Pizza Pilgrims Google account, not a personal one, so the data stays with 
 - Leadership: `…/?role=leadership`
 
 ## Changing questions
-Edit `CONFIG.roles` in `index.html` and push. Types: `rating` (1–5), `nps` (0–10), `choice`, `multi`. Every label has `en` and `de`. New questions get a new column in the Sheet automatically. Rewording a question also creates a new column, so make small fixes in the Sheet header as well.
+Edit `SURVEY` near the top of the script in `index.html` and push. Everyone gets the same questions. Types: `text` (open answer), `rating` (1–5, add `why` for a follow-up text box), `nps` (0–10), `choice`, `multi`. Every label has `en` and `de`. New questions get a new column in the Sheet automatically. Rewording a question also creates a new column, so make small fixes in the Sheet header as well.
 
 ## Changing the team code
 Edit `ACCESS_CODE` in Apps Script and deploy a new version. People re-enter the code once.
