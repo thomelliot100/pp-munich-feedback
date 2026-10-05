@@ -1,6 +1,6 @@
 # Pizza Pilgrims München — Feedback
 
-Internal feedback app for the Munich openings. Crew, site leads, the opening team and leadership answer a few quick questions, then add anything else as text, a voice note or photos. It works in any phone browser; add it to the home screen and it behaves like an app.
+Internal feedback app for the Munich openings. Site leads, the opening team and leadership answer a few quick questions, then add anything else as text, a voice note or photos. It works in any phone browser; add it to the home screen and it behaves like an app.
 
 - **App:** hosted on GitHub Pages
 - **Data:** a Google Sheet (one tab per group), with voice notes and photos in a Google Drive folder
@@ -30,7 +30,6 @@ Use a Pizza Pilgrims Google account, not a personal one, so the data stays with 
 **If you edit `Code.gs` later:** Deploy → Manage deployments → edit → Version: New version. That keeps the same URL.
 
 ## Links and QR codes
-- Staff noticeboard: `…/?site=muc-1&role=crew`
 - Site leads: `…/?site=muc-1&role=sitelead`
 - Opening team / head office: `…/?role=support`
 - Leadership: `…/?role=leadership`
