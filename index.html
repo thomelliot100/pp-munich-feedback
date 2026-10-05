@@ -77,6 +77,10 @@ h2{font-family:var(--body); font-weight:700; font-size:26px; line-height:1.15; m
 .qcount{color:var(--muted); font-weight:700; font-size:15px; margin:0 0 6px}
 
 .options{display:grid; gap:10px}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+.chips .lbl{flex-basis:100%; font-weight:700; font-size:16px}
+.chip{padding:9px 16px; border-radius:999px; border:2px solid var(--line); background:var(--card); font-weight:700; font-size:16px; cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--dkgreen); background:var(--tint)}
 .opt{display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:15px 18px; background:var(--card); border:2px solid var(--line); border-radius:var(--r); cursor:pointer; font-weight:700; transition:border-color .15s, transform .1s}
 .opt:active{transform:scale(.985)}
 .opt[aria-pressed="true"]{border-color:var(--green); background:var(--tint)}
@@ -259,8 +263,9 @@ const T = {
     codeSub: "You'll find it on the staff noticeboard or in the team chat.",
     codeLabel: "Team code", codeBad: "That code didn't work. Check it and try again.", codeGo: "Let me in",
     modeSurvey: "Take the survey", modeSurveySub: "A few quick questions, then anything else",
-    modeQuick: "Upload quick feedback", modeQuickSub: "Skip the questions. Type it, record it or snap it",
-    quickH: "What's on your mind?",
+    modeQuick: "Upload quick feedback", modeQuickSub: "Straight to it. A thought, a voice note or a photo",
+    quickH: "What's on your mind?", quickEmpty: "Add a thought, a voice note or a photo first.",
+    quickSite: "Which pizzeria? (optional)",
     who: "Which one's you?",
     where: "Which pizzeria?",
     of: (a,b)=>`Question ${a} of ${b}`,
@@ -293,8 +298,9 @@ const T = {
     codeSub: "Du findest ihn am Schwarzen Brett oder im Team-Chat.",
     codeLabel: "Team-Code", codeBad: "Der Code hat nicht funktioniert. Prüf ihn und versuch's nochmal.", codeGo: "Rein da",
     modeSurvey: "Zur Umfrage", modeSurveySub: "Ein paar kurze Fragen, dann alles Weitere",
-    modeQuick: "Schnelles Feedback hochladen", modeQuickSub: "Ohne Fragen. Schreib's, sprich's ein oder mach ein Foto",
-    quickH: "Was möchtest du loswerden?",
+    modeQuick: "Schnelles Feedback hochladen", modeQuickSub: "Direkt los. Ein Gedanke, eine Sprachnotiz oder ein Foto",
+    quickH: "Was möchtest du loswerden?", quickEmpty: "Schreib erst etwas, nimm eine Sprachnotiz auf oder füge ein Foto hinzu.",
+    quickSite: "Welche Pizzeria? (optional)",
     who: "Wer bist du?",
     where: "Welche Pizzeria?",
     of: (a,b)=>`Frage ${a} von ${b}`,
@@ -342,6 +348,7 @@ async function callScript(payload){
 }
 
 const CODE_KEY = "ppfb-code";
+const QUICK_LABEL = "Quick feedback";
 function savedCode(){ try{ return localStorage.getItem(CODE_KEY)||""; }catch(e){ return ""; } }
 async function checkCode(code){
   if (!LIVE) return code.trim().length>0;
@@ -351,7 +358,7 @@ async function checkCode(code){
 // Turns the answers into readable [column, value] pairs for the Sheet.
 function sheetColumns(rec){
   const role = CONFIG.roles.find(r=>r.id===rec.role);
-  const cols = [];
+  const cols = []; if (!role) return cols;
   role.questions.forEach(q=>{
     let v = rec.answers[q.id];
     if (v!=null && q.options){
@@ -376,7 +383,7 @@ async function saveFeedback(rec, voice, photos){
     action: "submit",
     code: state.code,
     id: rec.id,
-    tab: role.label.en,
+    tab: role?.label.en || QUICK_LABEL,
     site: CONFIG.sites.find(s=>s.id===rec.site)?.name.en || rec.site || "",
     lang: rec.lang,
     columns: sheetColumns(rec),
@@ -431,9 +438,10 @@ let recorder = null, recChunks = [], recTimer = null, recStart = 0;
 function steps(){
   const s = ["welcome"];
   if (CONFIG.requireCode && !state.code) s.push("code");
+  if (state.mode==="quick"){ s.push("postcard"); return s; }
   if (!(params.get("role") && state.role)) s.push("role");
   if (!(params.get("site") && state.site) && CONFIG.sites.length>1) s.push("site");
-  if (state.mode!=="quick") (state.role?.questions||[]).forEach((_,i)=>s.push("q"+i));
+  (state.role?.questions||[]).forEach((_,i)=>s.push("q"+i));
   s.push("postcard","contact");
   return s;
 }
@@ -517,7 +525,7 @@ function render(){
       ${actions(a==null||(Array.isArray(a)&&!a.length)?t.skip:t.next)}`;
   }
   else if (state.step==="postcard"){
-    const recording = !!recorder;
+    const recording = !!recorder; const quick = state.mode==="quick";
     body = `${header(pct)}<main>
       <h2>${state.mode==="quick"?t.quickH:t.cardH}</h2>
       <div class="postcard">
@@ -535,7 +543,8 @@ function render(){
         <p class="hint">${t.photoHint(CONFIG.maxPhotos)}</p>
         ${state.error?`<div class="err">${esc(state.error)}</div>`:""}
       </div>
-    </main>${actions(t.next)}`;
+      ${quick && CONFIG.sites.length>1 && !params.get("site") ? `<div class="chips"><span class="lbl">${t.quickSite}</span>${CONFIG.sites.map(x=>`<button class="chip" data-qsite="${x.id}" aria-pressed="${state.site?.id===x.id}">${esc(L(x.name))}</button>`).join("")}</div>`:""}
+    </main>${quick ? actions(state.sending?t.sending:t.send,!state.sending,true,true) : actions(t.next)}`;
   }
   else if (state.step==="contact"){
     body = `${header(pct)}<main><h2>${t.contactH}</h2><p class="lede">${t.contactSub}</p>
@@ -581,10 +590,12 @@ async function startRec(){
 
 async function submit(){
   const t = T[state.lang];
+  const quick = state.mode==="quick";
+  if (quick && !state.comment.trim() && !state.voice && !state.photos.length){ state.error = t.quickEmpty; render(); return; }
   state.sending = true; state.error = ""; render();
   const rec = {
-    id: uuid(), site: state.site?.id || null, role: state.role.id, lang: state.lang,
-    answers: state.answers, comment: state.comment.trim() || null,
+    id: uuid(), site: state.site?.id || null, role: quick ? "quick" : state.role.id, lang: state.lang,
+    answers: quick ? {} : state.answers, comment: state.comment.trim() || null,
     contact_name: state.name.trim() || null, contact_email: state.email.trim() || null,
     contact_consent: state.consent, user_agent: navigator.userAgent.slice(0,200)
   };
@@ -606,6 +617,7 @@ function wireFlow(){
       if (state.step==="welcome"){ state.step="role"; }
       go(1); return;
     }
+    if (b.dataset.qsite){ state.site = state.site?.id===b.dataset.qsite ? null : CONFIG.sites.find(x=>x.id===b.dataset.qsite); render(); return; }
     if (b.dataset.site){ state.site = CONFIG.sites.find(x=>x.id===b.dataset.site); render(); setTimeout(()=>go(1),180); return; }
     if (b.dataset.val!=null && state.step==="q"){
       const q = state.role.questions[state.qi];
@@ -621,7 +633,7 @@ function wireFlow(){
     switch(b.dataset.act){
       case "back": go(-1); break;
       case "next":
-        if (state.step==="contact"){ submit(); }
+        if (state.step==="contact" || (state.step==="postcard" && state.mode==="quick")){ submit(); }
         else if (state.step==="code"){
           state.checking=true; state.error=""; render();
           const ok = await checkCode(state.codeInput);
@@ -660,7 +672,7 @@ function wireFlow(){
    ADMIN DASHBOARD  (open the app URL with #admin)
    ============================================================ */
 const A = { rows: [], session: null, f: { site:"", role:"", from:"", to:"" }, msg:"" };
-const roleName = id => CONFIG.roles.find(r=>r.id===id)?.label.en || id;
+const roleName = id => CONFIG.roles.find(r=>r.id===id)?.label.en || (id==="quick" ? QUICK_LABEL : id);
 const siteName = id => CONFIG.sites.find(s=>s.id===id)?.name.en || id || "—";
 function qLabel(roleId,qid){ return CONFIG.roles.find(r=>r.id===roleId)?.questions.find(q=>q.id===qid)?.q.en || qid; }
 function optLabel(roleId,qid,v){
@@ -714,7 +726,7 @@ function renderAdmin(){
   $("#app").innerHTML = `${top}<main>
     <div class="filters">
       <select data-f="site" aria-label="Site"><option value="">All sites</option>${opt(CONFIG.sites.map(x=>[x.id,x.name.en]),A.f.site)}</select>
-      <select data-f="role" aria-label="Stakeholder"><option value="">All groups</option>${opt(CONFIG.roles.map(x=>[x.id,x.label.en]),A.f.role)}</select>
+      <select data-f="role" aria-label="Stakeholder"><option value="">All groups</option>${opt([...CONFIG.roles.map(x=>[x.id,x.label.en]),["quick",QUICK_LABEL]],A.f.role)}</select>
       <input type="date" data-f="from" value="${A.f.from}" aria-label="From">
       <input type="date" data-f="to" value="${A.f.to}" aria-label="To">
     </div>
