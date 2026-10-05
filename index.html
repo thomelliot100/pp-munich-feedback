@@ -265,7 +265,7 @@ const T = {
     modeSurvey: "Take the survey", modeSurveySub: "A few quick questions, then anything else",
     modeQuick: "Upload quick feedback", modeQuickSub: "Straight to it. A thought, a voice note or a photo",
     quickH: "What's on your mind?", quickEmpty: "Add a thought, a voice note or a photo first.",
-    quickSite: "Which pizzeria? (optional)",
+    quickSite: "Which pizzeria? (optional)", quickName: "Your name (optional)",
     who: "Which one's you?",
     where: "Which pizzeria?",
     of: (a,b)=>`Question ${a} of ${b}`,
@@ -300,7 +300,7 @@ const T = {
     modeSurvey: "Zur Umfrage", modeSurveySub: "Ein paar kurze Fragen, dann alles Weitere",
     modeQuick: "Schnelles Feedback hochladen", modeQuickSub: "Direkt los. Ein Gedanke, eine Sprachnotiz oder ein Foto",
     quickH: "Was möchtest du loswerden?", quickEmpty: "Schreib erst etwas, nimm eine Sprachnotiz auf oder füge ein Foto hinzu.",
-    quickSite: "Welche Pizzeria? (optional)",
+    quickSite: "Welche Pizzeria? (optional)", quickName: "Dein Name (optional)",
     who: "Wer bist du?",
     where: "Welche Pizzeria?",
     of: (a,b)=>`Frage ${a} von ${b}`,
@@ -544,6 +544,7 @@ function render(){
         ${state.error?`<div class="err">${esc(state.error)}</div>`:""}
       </div>
       ${quick && CONFIG.sites.length>1 && !params.get("site") ? `<div class="chips"><span class="lbl">${t.quickSite}</span>${CONFIG.sites.map(x=>`<button class="chip" data-qsite="${x.id}" aria-pressed="${state.site?.id===x.id}">${esc(L(x.name))}</button>`).join("")}</div>`:""}
+      ${quick ? `<div class="field" style="margin-top:18px"><label for="nm">${t.quickName}</label><input id="nm" autocomplete="name" value="${esc(state.name)}"></div>`:""}
     </main>${quick ? actions(state.sending?t.sending:t.send,!state.sending,true,true) : actions(t.next)}`;
   }
   else if (state.step==="contact"){
